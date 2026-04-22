@@ -1,0 +1,42 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap");
+
+/* Enable class-based dark mode (responds to .dark on <html>) */
+@variant dark (&:where(.dark, .dark *));
+
+/* ── Base ── */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #6c63ff; border-radius: 99px; }
+
+/* ── Keyframes (can't be done in Tailwind utilities) ── */
+@keyframes float-orb {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(24px, 18px) scale(1.06); }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin-btn {
+  to { transform: rotate(360deg); }
+}
+
+.anim-float      { animation: float-orb 8s ease-in-out infinite alternate; }
+.anim-float-2    { animation: float-orb 9s ease-in-out 2s infinite alternate-reverse; }
+.anim-float-3    { animation: float-orb 7s ease-in-out 4s infinite alternate; }
+.anim-fade-up    { animation: fade-up 0.5s ease both; }
+.anim-spin       { animation: spin-btn 0.65s linear infinite; }
+
+/* ── Gradient text (clip trick) ── */
+.grad-text {
+  background: linear-gradient(135deg, #6c63ff 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
