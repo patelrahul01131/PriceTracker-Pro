@@ -13,14 +13,16 @@ import {
 } from "recharts";
 
 /* ── helpers ── */
-const fmt = (n) =>
-  n != null ? "₹" + Number(n).toLocaleString("en-IN") : "—";
+const fmt = (n) => (n != null ? "₹" + Number(n).toLocaleString("en-IN") : "—");
 const fmtDate = (d) =>
   d
     ? new Date(d).toLocaleDateString("en-IN", {
         day: "2-digit",
         month: "short",
         year: "2-digit",
+        minute: "2-digit",
+        hour: "2-digit",
+        second: "2-digit",
       })
     : "—";
 
@@ -51,7 +53,8 @@ function buildSuggestion(product) {
       verdict: "WATCH",
       color: "yellow",
       icon: "👀",
-      reason: "Not enough price history yet. We need at least 2 check-ins to make a suggestion.",
+      reason:
+        "Not enough price history yet. We need at least 2 check-ins to make a suggestion.",
     };
   }
 
@@ -60,12 +63,14 @@ function buildSuggestion(product) {
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
   const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
-  const pctDropFromRegister = ((registerPrice - currentPrice) / registerPrice) * 100;
+  const pctDropFromRegister =
+    ((registerPrice - currentPrice) / registerPrice) * 100;
   const pctFromAllTimeHigh = ((maxPrice - currentPrice) / maxPrice) * 100;
 
   // Trend: is the price falling over last 3 checks?
   const last3 = prices.slice(-3);
-  const recentTrend = last3.length >= 2 ? last3[last3.length - 1] - last3[0] : 0;
+  const recentTrend =
+    last3.length >= 2 ? last3[last3.length - 1] - last3[0] : 0;
 
   if (currentPrice <= minPrice) {
     return {
@@ -193,7 +198,7 @@ export default function ProductDetail() {
       const res = await axios.patch(
         `http://localhost:3000/api/product/${id}/toggle-check`,
         {},
-        { headers: { Authorization: `Bearer ${token()}` } }
+        { headers: { Authorization: `Bearer ${token()}` } },
       );
       setProduct(res.data.product);
     } catch {
@@ -211,7 +216,7 @@ export default function ProductDetail() {
       const res = await axios.post(
         `http://localhost:3000/api/product/${id}/manual-check`,
         {},
-        { headers: { Authorization: `Bearer ${token()}` } }
+        { headers: { Authorization: `Bearer ${token()}` } },
       );
       const updated = res.data.product;
       const oldPrice = product.price;
@@ -224,8 +229,8 @@ export default function ProductDetail() {
         msg: same
           ? `Price unchanged — still ${fmt(newPrice)}`
           : dropped
-          ? `Price dropped! ${fmt(oldPrice)} → ${fmt(newPrice)} 🎉`
-          : `Price went up. ${fmt(oldPrice)} → ${fmt(newPrice)}`,
+            ? `Price dropped! ${fmt(oldPrice)} → ${fmt(newPrice)} 🎉`
+            : `Price went up. ${fmt(oldPrice)} → ${fmt(newPrice)}`,
         newPrice,
         dropped,
         same,
@@ -233,7 +238,9 @@ export default function ProductDetail() {
     } catch (err) {
       setCheckResult({
         type: "error",
-        msg: err.response?.data?.message || "Failed to fetch latest price. Try again.",
+        msg:
+          err.response?.data?.message ||
+          "Failed to fetch latest price. Try again.",
       });
     } finally {
       setManualChecking(false);
@@ -301,7 +308,6 @@ export default function ProductDetail() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-
         {/* ── Hero card ── */}
         <div className="flex flex-col sm:flex-row gap-6 p-6 rounded-2xl bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border border-white/60 dark:border-slate-700/50 shadow-sm">
           {/* image */}
@@ -333,9 +339,10 @@ export default function ProductDetail() {
                 onClick={handleToggle}
                 disabled={toggling || manualChecking}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide border transition-all duration-200
-                  ${isActive
-                    ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/20"
-                    : "bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600"
+                  ${
+                    isActive
+                      ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/20"
+                      : "bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600"
                   } disabled:opacity-60 disabled:cursor-not-allowed`}
               >
                 {toggling ? (
@@ -416,8 +423,8 @@ export default function ProductDetail() {
                     isDown
                       ? "text-emerald-600 dark:text-emerald-400"
                       : diff > 0
-                      ? "text-red-600 dark:text-red-400"
-                      : "text-slate-900 dark:text-slate-100"
+                        ? "text-red-600 dark:text-red-400"
+                        : "text-slate-900 dark:text-slate-100"
                   }`}
                 >
                   {fmt(product.price)}
@@ -428,7 +435,9 @@ export default function ProductDetail() {
                   <p className="text-xs text-slate-400 mb-0.5">Change</p>
                   <p
                     className={`text-lg font-bold ${
-                      isDown ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                      isDown
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-red-600 dark:text-red-400"
                     }`}
                   >
                     {isDown ? "▼" : "▲"} {Math.abs(pct)}%
@@ -459,13 +468,17 @@ export default function ProductDetail() {
                       ? checkResult.dropped
                         ? "bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 text-emerald-700 dark:text-emerald-400"
                         : checkResult.same
-                        ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 text-blue-700 dark:text-blue-400"
-                        : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-400"
+                          ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 text-blue-700 dark:text-blue-400"
+                          : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-400"
                       : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-400"
                   }`}
               >
                 {checkResult.type === "success"
-                  ? checkResult.dropped ? "🎉" : checkResult.same ? "ℹ️" : "⚠️"
+                  ? checkResult.dropped
+                    ? "🎉"
+                    : checkResult.same
+                      ? "ℹ️"
+                      : "⚠️"
                   : "❌"}
                 {checkResult.msg}
               </div>
@@ -476,17 +489,39 @@ export default function ProductDetail() {
         {/* ── Price stats grid ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: "All-Time Low", value: fmt(minPrice), icon: "📉", color: "text-emerald-500" },
-            { label: "All-Time High", value: fmt(maxPrice), icon: "📈", color: "text-red-500" },
-            { label: "Average Price", value: fmt(avgPrice), icon: "📊", color: "text-violet-500" },
-            { label: "Price Checks", value: history.length, icon: "🔍", color: "text-blue-500" },
+            {
+              label: "All-Time Low",
+              value: fmt(minPrice),
+              icon: "📉",
+              color: "text-emerald-500",
+            },
+            {
+              label: "All-Time High",
+              value: fmt(maxPrice),
+              icon: "📈",
+              color: "text-red-500",
+            },
+            {
+              label: "Average Price",
+              value: fmt(avgPrice),
+              icon: "📊",
+              color: "text-violet-500",
+            },
+            {
+              label: "Price Checks",
+              value: history.length,
+              icon: "🔍",
+              color: "text-blue-500",
+            },
           ].map((s) => (
             <div
               key={s.label}
               className="p-4 rounded-2xl bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border border-white/60 dark:border-slate-700/50 shadow-sm flex flex-col gap-1"
             >
               <span className="text-xl">{s.icon}</span>
-              <span className={`text-xl font-extrabold ${s.color}`}>{s.value}</span>
+              <span className={`text-xl font-extrabold ${s.color}`}>
+                {s.value}
+              </span>
               <span className="text-xs text-slate-400">{s.label}</span>
             </div>
           ))}
@@ -509,7 +544,9 @@ export default function ProductDetail() {
               </span>
             </div>
           </div>
-          <p className={`text-sm font-medium ${vs.text}`}>{suggestion.reason}</p>
+          <p className={`text-sm font-medium ${vs.text}`}>
+            {suggestion.reason}
+          </p>
         </div>
 
         {/* ── Price History Chart ── */}
@@ -526,7 +563,9 @@ export default function ProductDetail() {
           {chartData.length < 1 ? (
             <div className="h-48 flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-slate-500">
               <span className="text-4xl">📭</span>
-              <p className="text-sm">No price history yet. Check back after the first price check.</p>
+              <p className="text-sm">
+                No price history yet. Check back after the first price check.
+              </p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={280}>
@@ -540,7 +579,11 @@ export default function ProductDetail() {
                     <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.25} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#334155"
+                  strokeOpacity={0.25}
+                />
                 <XAxis
                   dataKey="date"
                   tick={{ fill: "#94a3b8", fontSize: 11 }}
@@ -609,7 +652,7 @@ export default function ProductDetail() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-slate-50/80 dark:bg-slate-800/40">
-                    {["#", "Date", "Price", "vs Register"].map((h) => (
+                    {["Date", "Price", "vs Register"].map((h) => (
                       <th
                         key={h}
                         className="px-5 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500"
@@ -621,14 +664,13 @@ export default function ProductDetail() {
                 </thead>
                 <tbody>
                   {[...history].reverse().map((h, i) => {
-                    const chgPct =
-                      product.register_price
-                        ? (
-                            ((Number(h.price) - Number(product.register_price)) /
-                              Number(product.register_price)) *
-                            100
-                          ).toFixed(1)
-                        : null;
+                    const chgPct = product.register_price
+                      ? (
+                          ((Number(h.price) - Number(product.register_price)) /
+                            Number(product.register_price)) *
+                          100
+                        ).toFixed(1)
+                      : null;
                     const chgDown =
                       product.register_price &&
                       Number(h.price) < Number(product.register_price);
@@ -638,9 +680,6 @@ export default function ProductDetail() {
                         key={i}
                         className="border-b border-slate-100 dark:border-slate-800/60 text-center"
                       >
-                        <td className="px-5 py-3 text-xs text-slate-400">
-                          {history.length - i}
-                        </td>
                         <td className="px-5 py-3 text-sm text-slate-600 dark:text-slate-300">
                           {fmtDate(h.date)}
                         </td>
@@ -649,16 +688,20 @@ export default function ProductDetail() {
                             h.price === minPrice
                               ? "text-emerald-600 dark:text-emerald-400"
                               : h.price === maxPrice
-                              ? "text-red-600 dark:text-red-400"
-                              : "text-slate-700 dark:text-slate-200"
+                                ? "text-red-600 dark:text-red-400"
+                                : "text-slate-700 dark:text-slate-200"
                           }`}
                         >
                           {fmt(h.price)}
                           {h.price === minPrice && (
-                            <span className="ml-1 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-full">low</span>
+                            <span className="ml-1 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-full">
+                              low
+                            </span>
                           )}
                           {h.price === maxPrice && h.price !== minPrice && (
-                            <span className="ml-1 text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full">high</span>
+                            <span className="ml-1 text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full">
+                              high
+                            </span>
                           )}
                         </td>
                         <td
