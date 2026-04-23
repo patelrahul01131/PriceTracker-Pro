@@ -1,8 +1,9 @@
 const Product = require("../model/product");
 const flipkart = require("../components/flipkart");
-const scrap = require("../components/scrap");
 const ajio = require("../components/ajio");
 const meesho = require("../components/meesho");
+const zepto = require("../components/zepto");
+const scrap = require("../components/scrap");
 const checkPrice = require("../components/checkPrice");
 
 const trackProduct = async (req, res) => {
@@ -20,6 +21,9 @@ const trackProduct = async (req, res) => {
         else if(url.includes("meesho")){
             product = await meesho(url);
         }
+        else if (url.includes('zepto.com')) {
+            product = await zepto(url);
+        }
         else{
             product = await scrap(url);
         }
@@ -27,6 +31,14 @@ const trackProduct = async (req, res) => {
 
         if (!product) {
             return res.status(500).json({ message: "Failed to scrape product" });
+        }
+
+        if (!product || isNaN(product.price) || product.price === null) {
+            console.log("⚠️ Scraper returned invalid data. Aborting save to DB.");
+            return res.status(400).json({ 
+                success: false, 
+                message: "We couldn't get a valid price for this item." 
+            });
         }
 
         console.log(product);

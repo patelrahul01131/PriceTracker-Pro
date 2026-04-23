@@ -1,6 +1,7 @@
 const flipkart = require("./flipkart");
 const ajio    = require("./ajio");
 const meesho  = require("./meesho");
+const zepto   = require("./zepto");
 const scrap   = require("./scrap");
 
 /**
@@ -20,6 +21,8 @@ async function checkPrice(url) {
       result = await ajio(url);
     } else if (url.includes("meesho")) {
       result = await meesho(url);
+    } else if (url.includes("zepto")) {
+      result = await zepto(url);
     } else {
       result = await scrap(url);
     }
