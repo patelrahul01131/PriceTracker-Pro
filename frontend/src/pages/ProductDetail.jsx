@@ -72,6 +72,15 @@ function buildSuggestion(product) {
   const recentTrend =
     last3.length >= 2 ? last3[last3.length - 1] - last3[0] : 0;
 
+  if (maxPrice === minPrice) {
+    return {
+      verdict: "PRICE NOT CHANGED",
+      color: "yellow",
+      icon: "⚖️",
+      reason: `The price hasn't changed from ${fmt(currentPrice)} since tracking started. Keep waiting.`,
+    };
+  }
+
   if (currentPrice <= minPrice) {
     return {
       verdict: "BUY NOW",

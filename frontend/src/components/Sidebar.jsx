@@ -91,7 +91,8 @@ export default function Sidebar({ page, setPage }) {
       className="w-[240px] shrink-0 flex flex-col gap-1 p-4
                       bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl
                       border-r border-slate-200/80 dark:border-slate-700/50
-                      shadow-[4px_0_24px_rgba(0,0,0,0.04)]"
+                      shadow-[4px_0_24px_rgba(0,0,0,0.04)]
+                      h-screen sticky top-0 overflow-y-auto"
     >
       {/* Brand */}
       <div className="flex items-center gap-2 px-2 pb-4 mb-2 border-b border-slate-200 dark:border-slate-700/60">

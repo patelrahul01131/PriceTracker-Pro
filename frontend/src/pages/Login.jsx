@@ -115,8 +115,12 @@ export default function Login() {
         email,
         password,
       });
-      if (res.data) {
+      if (res.data && res.data.token) {
         localStorage.setItem("token", res.data.token);
+        if (res.data.user) {
+          localStorage.setItem("userName", res.data.user.name || "User");
+          localStorage.setItem("userEmail", res.data.user.email || "");
+        }
         navigate("/dashboard");
       } else {
         setError(res.data?.message || "Login failed.");

@@ -11,6 +11,9 @@ export default function DashboardTopbar({ page, search, setSearch }) {
   const { theme, toggle } = useTheme();
   const currentPage = NAV_ITEMS.find((n) => n.id === page);
 
+  const userName = localStorage.getItem("userName") || "User";
+  const userInitials = userName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "U";
+
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between gap-4 px-6 h-16
                        bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl
@@ -25,7 +28,7 @@ export default function DashboardTopbar({ page, search, setSearch }) {
           {currentPage?.label ?? "Dashboard"}
         </h2>
         <p className="text-xs text-slate-400 dark:text-slate-500">
-          Welcome back, John 👋
+          Welcome back, {userName.split(" ")[0]} 👋
         </p>
       </div>
 
@@ -71,7 +74,7 @@ export default function DashboardTopbar({ page, search, setSearch }) {
                      flex items-center justify-center text-white text-sm font-bold
                      cursor-pointer shadow-md shadow-violet-500/30 shrink-0"
         >
-          JD
+          {userInitials}
         </div>
       </div>
     </header>

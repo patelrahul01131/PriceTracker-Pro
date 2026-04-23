@@ -235,14 +235,14 @@ function MiniTable({ products, onRemove, searchTerm, onProductClick }) {
           📋 Recent Trackers
         </span>
         <span className="text-xs text-slate-400 dark:text-slate-500">
-          {products.length} item{products.length !== 1 ? "s" : ""}
+          {filtered.length} item{filtered.length !== 1 ? "s" : ""}
         </span>
       </div>
-      {products.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="py-12 text-center">
           <div className="text-4xl mb-3">📭</div>
           <p className="text-sm text-slate-400 dark:text-slate-500">
-            No trackers yet. Add one above!
+            {searchTerm ? "No results found for your search." : "No trackers yet. Add one above!"}
           </p>
         </div>
       ) : (
@@ -272,7 +272,7 @@ function MiniTable({ products, onRemove, searchTerm, onProductClick }) {
               </tr>
             </thead>
             <tbody className="gap-1">
-              {products.map((p) => {
+              {filtered.map((p) => {
                 return (
                   <tr
                     key={p._id || p.id}
@@ -323,20 +323,21 @@ function MiniTable({ products, onRemove, searchTerm, onProductClick }) {
                       const diff = p.price - p.register_price;
                       const pct = ((diff / p.register_price) * 100).toFixed(1);
                       const isDown = diff < 0;
+                      const isZero = diff === 0;
 
                       return (
                         <td
                           className={`px-5 py-3 text-sm text-center font-semibold
                               ${
-                                isDown
+                                isDown || isZero
                                   ? "text-green-700 dark:text-green-400"
                                   : "text-red-700 dark:text-red-400"
                               }`}
                         >
-                          {isDown ? "▼" : "▲"} ₹
+                          {isZero ? "—" : isDown ? "▼" : "▲"} ₹
                           {Math.abs(diff).toLocaleString()}{" "}
                           <span className="text-xs opacity-75">
-                            ({isDown ? "" : "+"}
+                            ({isZero || isDown ? "" : "+"}
                             {pct}%)
                           </span>
                         </td>

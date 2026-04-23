@@ -18,7 +18,7 @@ export function ThemeProvider({ children }) {
     } else {
       document.documentElement.classList.remove("dark");
     }
-    localStorage.setItem("theme", theme);
+    localStorage.setItem("pi-theme", theme);
   }, [theme]);
 
   const toggle = () => setTheme((t) => (t === "dark" ? "light" : "dark"));

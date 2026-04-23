@@ -79,7 +79,7 @@ async function zepto(productUrl) {
         
         // Save the raw response to your Innvonix project folder
         fs.writeFileSync('zepto-debug-dump.txt', rscData);
-        console.log(`📁 Saved raw response to 'zepto-debug-dump.txt'.`);
+        // console.log(`📁 Saved raw response to 'zepto-debug-dump.txt'.`);
 
         if (res.status === 403 || res.status === 401) {
             console.error(`🚨 CLOUDFLARE BLOCK: Your IP address is temporarily banned.`);
@@ -129,6 +129,7 @@ async function zepto(productUrl) {
 
 
 
+// ── Ultimate Schema Extraction Logic ─────────────────────────────
 function extractExactProduct(text, pvid, metaData = {}, slug = "") {
     // 1. Normalize text: Unescape quotes, newlines, and forward slashes
     let cleanText = text.replace(/\\"/g, '"').replace(/\\n/g, '').replace(/\\\//g, '/');
@@ -138,40 +139,56 @@ function extractExactProduct(text, pvid, metaData = {}, slug = "") {
         return null;
     }
 
-    // 2. EXTRACT EXACT PRICE (Fix for the ₹4-5 margin)
-    // We look for the absolute lowest Zepto Pass (ULTRA_SAVER) price first!
+    // 2. EXTRACT EXACT PRICE & MRP (Fixed to grab Standard Price, not Zepto Pass)
+    let storeProductIdx = cleanText.indexOf('"storeProduct"');
+    if (storeProductIdx === -1) return null;
+
+    // Isolate a chunk so we only grab the standard price attached to this item
+    let storeChunk = cleanText.slice(storeProductIdx, storeProductIdx + 1500);
+
+    const priceMatch = storeChunk.match(/"(?:discountedSellingPrice|sellingPrice)"\s*:\s*(\d+)/);
+    const mrpMatch = storeChunk.match(/"mrp"\s*:\s*(\d+)/);
+
     let price = null;
-    const ultraSaverMatch = cleanText.match(/"discountedSellingPrice"\s*:\s*(\d+)\s*,\s*"pricingEntity"\s*:\s*"ULTRA_SAVER"/);
-    // console.log("Ultra Saver Match :", ultraSaverMatch);
-    if (!ultraSaverMatch) {
-        price = parseInt(ultraSaverMatch[1]);
-    } else {
-        // Fallback to standard price if no ULTRA_SAVER exists
-        const stdPriceMatch = cleanText.match(/"(?:discountedSellingPrice|sellingPrice)"\s*:\s*(\d+)/);
-        if (stdPriceMatch) price = parseInt(stdPriceMatch[1]);
+    if (priceMatch) {
+        price = parseInt(priceMatch[1]);
+        if (price > 1000) price /= 100;
     }
 
-    if (price && price > 1000) price /= 100; 
+    let mrp = null;
+    if (mrpMatch) {
+        mrp = parseInt(mrpMatch[1]);
+        if (mrp > 1000) mrp /= 100;
+    } else {
+        mrp = price;
+    }
 
-    // 3. EXTRACT MRP
-    const mrpMatch = cleanText.match(/"mrp"\s*:\s*(\d+)/);
-    let mrp = mrpMatch ? parseInt(mrpMatch[1]) : price;
-    if (mrp && mrp > 1000) mrp /= 100;
-
-    // 4. EXTRACT NAME, BRAND, IMAGE FROM SEO SCHEMA
+    // 3. EXTRACT NAME, BRAND, IMAGE FROM SEO SCHEMA
     // Zepto generates a clean Schema.org object at the very end of the file.
     
     const schemaNameMatch = cleanText.match(/"content"\s*:\s*"([^"]+)"\s*,\s*"itemProp"\s*:\s*"name"/);
     let formattedSlug = slug ? slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Unknown Product';
     let name = metaData.name || (schemaNameMatch ? schemaNameMatch[1] : formattedSlug);
 
-    const schemaImageMatch = cleanText.match(/"href"\s*:\s*"([^"]+)"\s*,\s*"itemProp"\s*:\s*"image"/);
-    let image = metaData.image || (schemaImageMatch ? schemaImageMatch[1] : 'No image found');
-
     const schemaBrandMatch = cleanText.match(/"itemProp"\s*:\s*"brand".*?"content"\s*:\s*"([^"]+)"/);
     let brand = schemaBrandMatch ? schemaBrandMatch[1] : '-';
 
-    // 5. EXTRACT RATINGS
+    // Flexible Image Fallback (Tries Schema first, then raw path)
+    const schemaImageMatch = cleanText.match(/"href"\s*:\s*"([^"]+)"\s*,\s*"itemProp"\s*:\s*"image"/);
+    const rawImageMatch = cleanText.match(/"path"\s*:\s*"(cms\/product_variant\/[^"]+)"/);
+
+    let image = metaData.image;
+    if (!image) {
+        if (schemaImageMatch) {
+            image = schemaImageMatch[1];
+        } else if (rawImageMatch) {
+            image = `https://cdn.zeptonow.com/production/ik-seo/tr:w-1000,ar-1000-1000,pr-true,f-avif,q-40,dpr-2/${rawImageMatch[1]}`;
+        } else {
+            image = 'No image found';
+        }
+    }
+
+    // 4. EXTRACT RATINGS
     const ratingMatch = cleanText.match(/"content"\s*:\s*"([\d.]+)"\s*,\s*"itemProp"\s*:\s*"ratingValue"/);
     let rating = ratingMatch ? parseFloat(ratingMatch[1]) : 0;
 

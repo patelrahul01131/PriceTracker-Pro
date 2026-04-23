@@ -47,8 +47,8 @@ export default function Settings() {
 
       {/* Profile */}
       <SettingSection title="👤 Profile">
-        <FieldRow id="settings-name"  label="Full Name"       type="text"  defaultValue="John Doe" />
-        <FieldRow id="settings-email" label="Email Address"   type="email" defaultValue="john@example.com" />
+        <FieldRow id="settings-name"  label="Full Name"       type="text"  defaultValue={localStorage.getItem("userName") || ""} />
+        <FieldRow id="settings-email" label="Email Address"   type="email" defaultValue={localStorage.getItem("userEmail") || ""} />
         <FieldRow id="settings-phone" label="Phone (optional)" type="tel"  placeholder="+91 98765 43210" />
       </SettingSection>
 
