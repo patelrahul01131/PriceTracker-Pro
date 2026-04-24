@@ -32,10 +32,11 @@ export default function MyTrackers({ products, setProducts, searchTerm }) {
 
   const removeProduct = (id) => setProducts((p) => p.filter((x) => x.id !== id));
 
-  const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.site.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = products.filter((p) => {
+    const term = (searchTerm || "").toLowerCase();
+    if (!term) return true;
+    return p.name?.toLowerCase().includes(term) || p.platform?.toLowerCase().includes(term);
+  });
 
   const isError = msg.startsWith("error:");
   const msgText = msg.replace(/^(success|error):/, "");

@@ -219,9 +219,11 @@ function UrlTracker({ products, setProducts }) {
 /* ── Mini product table (shows top 5 on home) ── */
 function MiniTable({ products, onRemove, searchTerm, onProductClick }) {
   const filtered = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.site.toLowerCase().includes(searchTerm.toLowerCase()),
+    (p) => {
+      const term = (searchTerm || "").toLowerCase();
+      if (!term) return true;
+      return p.name?.toLowerCase().includes(term) || p.platform?.toLowerCase().includes(term);
+    }
   );
 
   return (
