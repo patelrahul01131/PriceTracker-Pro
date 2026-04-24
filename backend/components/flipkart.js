@@ -9,7 +9,12 @@ async function flipkart(url) {
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-blink-features=AutomationControlled',
-            '--window-size=1920,1080'
+            '--window-size=1920,1080',
+            // 🚀 SPEED BOOST: Disable GPU and unnecessary rendering features
+            '--disable-gpu',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--mute-audio'
         ]
     });
 
@@ -19,25 +24,41 @@ async function flipkart(url) {
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
     await page.setViewport({ width: 1920, height: 1080 });
 
-    try {
-        console.log(`🚀 [Flipkart] Navigating to: ${url}`);
+    // 🚀 SPEED BOOST: Intercept and block heavy resources (Images, CSS, Fonts)
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+        const resourceType = req.resourceType();
+        if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
+            req.abort();
+        } else {
+            req.continue();
+        }
+    });
+
+try {
+        console.log(`📡 [Flipkart] Performing Security Warmup...`);
         
-        // 2. Use 'networkidle2' to ensure the challenge script has time to resolve
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+        // 🚀 THE FIX: Visit the homepage first to grab the Security Clearance Cookies
+        await page.goto('https://www.flipkart.com/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+        
+        // Give the Stealth Plugin 1.5 seconds to pass the background JavaScript tests
+        await new Promise(r => setTimeout(r, 1500));
 
-        // 3. Wait for a random human-like interval (2-4 seconds)
-        await new Promise(r => setTimeout(r, 2000 + Math.random() * 2000));
+        console.log(`🚀 [Flipkart] Navigating to Product: ${url}`);
+        
+        // Now navigate to the actual product. Flipkart sees we came from their homepage!
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-        // 4. Check if we hit the "Human" block
+        // 🚀 SPEED BOOST: Check for CAPTCHA instantly, don't wait 4 seconds!
         const isBlocked = await page.evaluate(() => {
             const text = document.body.innerText;
             return text.includes('Are you a human?') || text.includes('captcha');
         });
 
         if (isBlocked) {
-            console.log("⚠️ Blocked by CAPTCHA. Attempting a quick reload...");
-            await page.reload({ waitUntil: 'networkidle2' });
-            await new Promise(r => setTimeout(r, 3000));
+            console.log("⚠️ Still Blocked. Attempting a quick reload...");
+            await page.reload({ waitUntil: 'domcontentloaded' });
+            await new Promise(r => setTimeout(r, 2000));
         }
 
         const productData = await page.evaluate(() => {
@@ -63,7 +84,7 @@ async function flipkart(url) {
                 } catch (e) {}
             });
 
-            // Strategy 2: CSS Fallback (If blocked or JSON-LD fails)
+            // Strategy 2: CSS Fallback
             if (!res.name || res.name.includes('human')) {
                 res.name = document.querySelector('.B_NuCI')?.innerText || document.querySelector('h1')?.innerText;
                 res.price = document.querySelector('.Nx9bqj')?.innerText?.replace(/[^\d]/g, '');
@@ -74,7 +95,6 @@ async function flipkart(url) {
             return res;
         });
 
-        // 5. Final validation before returning to Controller
         if (!productData.name || productData.name.includes('Are you a human?')) {
             console.error("❌ Extraction failed: Still hitting CAPTCHA.");
             return null; 

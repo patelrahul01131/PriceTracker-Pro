@@ -29,9 +29,12 @@ async function meesho(url, retries = 3) {
                 name: $('meta[property="og:title"]').attr('content')?.split('-')[0].trim() || $('h1').text().trim(),
                 image: $('meta[property="og:image"]').attr('content') || $('img[alt="product"]').attr('src'),
                 platform: "Meesho",
-                brand: "Generic", // Default for Meesho
-                rating: 0,
+                brand: "Generic", 
+                rating: "-",
                 price: null,
+                status: "active",
+                inStock: true, 
+                currency: "INR"
             };
 
             // Price Hunt
@@ -48,10 +51,11 @@ async function meesho(url, retries = 3) {
             if (nextData) {
                 try {
                     const state = JSON.parse(nextData);
-                    const p = state?.props?.pageProps?.initialState?.product?.productData;
+                    const p = state?.props?.pageProps?.initialState?.product?.details?.data;
+                    
                     if (p) {
-                        extracted.rating = p.rating || 0;
-                        extracted.brand = p.brand_name || "-";
+                        extracted.rating = p.review_summary?.data?.average_rating || 0;
+                        extracted.brand = p.brand || p.supplier_name || "Generic";
                     }
                 } catch (e) {}
             }

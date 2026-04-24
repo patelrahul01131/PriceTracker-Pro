@@ -5,6 +5,7 @@ const cors = require("cors");
 const ConnectDb = require("./db.js/db");
 const productRoutes = require("./routes/product");
 const { startPriceCheckCron, runPriceCheck } = require("./cron/priceChecker");
+const { startWeeklyReportCron } = require("./cron/weeklyReport");
 
 require('dotenv').config()
 app.use(cors());
@@ -33,6 +34,7 @@ app.post('/api/admin/run-price-check', async (req, res) => {
 
 /* ── Start the 4×-daily cron job ── */
 startPriceCheckCron();
+startWeeklyReportCron();
 
 app.listen(3000, () => {
     console.log("Server started on port 3000");

@@ -1,6 +1,8 @@
 const cron = require("node-cron");
 const Product = require("../model/product");
+const User = require("../model/User");
 const checkPrice = require("../components/checkPrice");
+const { sendPriceDropEmail } = require("../utils/email");
 
 /* ────────────────────────────────────────────────
    CONFIG
@@ -33,6 +35,8 @@ async function processOne(product) {
 
     const { price, inStock } = result;
     const now = new Date();
+    
+    const oldPrice = product.price;
 
     // Always push a new history point and update current price + check date
     const update = {
@@ -46,6 +50,12 @@ async function processOne(product) {
 
     await Product.findByIdAndUpdate(product._id, update);
     console.log(`${label} ✅  ₹${price}`);
+
+    if (oldPrice && price < oldPrice) {
+      if (product.user && product.user.email && product.user.trackingPreferences?.notifyEmail !== false) {
+        await sendPriceDropEmail(product.user.email, product, oldPrice, price);
+      }
+    }
   } catch (err) {
     // Catch per-product errors so one bad scrape never breaks the whole run
     console.error(`${label} ❌  ${err.message}`);
@@ -90,7 +100,8 @@ async function runPriceCheck() {
       const batch = await Product.find(filter)
         .sort({ _id: 1 })          // consistent order for cursor
         .limit(BATCH_SIZE)
-        .select("_id name url inStock price")  // fetch only needed fields
+        .populate("user", "email trackingPreferences")
+        .select("_id name url inStock price user last_check_date")  // fetch only needed fields
         .lean();                               // plain JS objects, faster
 
       if (!batch.length) break; // all products processed
@@ -101,6 +112,24 @@ async function runPriceCheck() {
 
       // Process one-by-one inside the batch (sequential, not parallel)
       for (const product of batch) {
+        // Respect user tracking interval preference
+        if (product.user && product.user.trackingPreferences && product.user.trackingPreferences.interval) {
+          let intervalHours = 24; // default
+          const intStr = product.user.trackingPreferences.interval;
+          const match = intStr.match(/\d+/);
+          if (match) {
+            intervalHours = parseInt(match[0], 10);
+          }
+          
+          if (product.last_check_date) {
+            const hoursSinceLastCheck = (new Date() - new Date(product.last_check_date)) / (1000 * 60 * 60);
+            if (hoursSinceLastCheck < intervalHours) {
+              console.log(`[PriceCheck] Skipping "${product.name?.slice(0, 40)}" — interval ${intervalHours}h not reached.`);
+              continue;
+            }
+          }
+        }
+
         const before = failed;
         await processOne(product);
         if (failed > before) { /* error already logged */ }
