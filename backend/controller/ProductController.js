@@ -30,6 +30,7 @@ const trackProduct = async (req, res) => {
 
 
         if (!product) {
+            console.log("failed to scrape product");
             return res.status(500).json({ message: "Failed to scrape product" });
         }
 
@@ -75,7 +76,7 @@ const trackProduct = async (req, res) => {
         return res.status(201).json({ message: "Product tracked successfully", product: newProduct });
 
     } catch (error) {
-        console.log(error);
+        console.log("failed to track product");
         return res.status(500).json({ message: "Failed to track product", error: error.message });
     }
 };
@@ -85,7 +86,7 @@ const getAllProducts = async (req, res) => {
         const products = await Product.find({ user: req.user.id });
         return res.status(200).json({ products });
     } catch (error) {
-        console.log(error);
+        console.log("failed to get products");
         return res.status(500).json({ message: "Failed to get products", error: error.message });
     }
 };
@@ -98,7 +99,7 @@ const getProductById = async (req, res) => {
         }
         return res.status(200).json({ product });
     } catch (error) {
-        console.log(error);
+        console.log("failed to get product");
         return res.status(500).json({ message: "Failed to get product", error: error.message });
     }
 };
@@ -113,7 +114,7 @@ const toggleProductCheck = async (req, res) => {
         await product.save();
         return res.status(200).json({ product });
     } catch (error) {
-        console.log(error);
+        console.log("failed to toggle product");
         return res.status(500).json({ message: "Failed to toggle product", error: error.message });
     }
 };

@@ -139,7 +139,7 @@ function UrlTracker({ products, setProducts }) {
       getProducts();
     } catch (err) {
       if (err.status === 500) {
-        setMsg("error: Could not fetch product try again later");
+        setMsg("error: Could not fetch product try again later", err);
       } else if (err.status === 401) {
         setMsg("error: You are not authenticated");
       } else {
@@ -218,13 +218,14 @@ function UrlTracker({ products, setProducts }) {
 
 /* ── Mini product table (shows top 5 on home) ── */
 function MiniTable({ products, onRemove, searchTerm, onProductClick }) {
-  const filtered = products.filter(
-    (p) => {
-      const term = (searchTerm || "").toLowerCase();
-      if (!term) return true;
-      return p.name?.toLowerCase().includes(term) || p.platform?.toLowerCase().includes(term);
-    }
-  );
+  const filtered = products.filter((p) => {
+    const term = (searchTerm || "").toLowerCase();
+    if (!term) return true;
+    return (
+      p.name?.toLowerCase().includes(term) ||
+      p.platform?.toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div
@@ -244,7 +245,9 @@ function MiniTable({ products, onRemove, searchTerm, onProductClick }) {
         <div className="py-12 text-center">
           <div className="text-4xl mb-3">📭</div>
           <p className="text-sm text-slate-400 dark:text-slate-500">
-            {searchTerm ? "No results found for your search." : "No trackers yet. Add one above!"}
+            {searchTerm
+              ? "No results found for your search."
+              : "No trackers yet. Add one above!"}
           </p>
         </div>
       ) : (
