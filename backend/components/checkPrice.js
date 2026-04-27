@@ -9,9 +9,10 @@ const scrap   = require("./scrap");
  * Routes to the correct scraper based on the domain.
  *
  * @param {string} url
+ * @param {number} lastKnownPrice
  * @returns {Promise<{ price: number } | null>}
  */
-async function checkPrice(url) {
+async function checkPrice(url, lastKnownPrice = null) {
   try {
     let result = null;
 
@@ -24,7 +25,7 @@ async function checkPrice(url) {
     } else if (url.includes("zepto")) {
       result = await zepto(url);
     } else {
-      result = await scrap(url);
+      result = await scrap(url, lastKnownPrice);
     }
 
     if (!result || result.price == null) return null;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { createPortal } from "react-dom";
 
 const IcAdd = () => (
   <svg
@@ -16,9 +17,9 @@ const IcAdd = () => (
     <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
-const IcTrash = () => (
+const IcTrash = ({ className }) => (
   <svg
-    className="w-[15px] h-[15px]"
+    className={className || "w-[15px] h-[15px]"}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -86,13 +87,12 @@ function UrlTracker({ products, setProducts }) {
   const [urlInput, setUrlInput] = useState("");
   const [adding, setAdding] = useState(false);
   const [msg, setMsg] = useState("");
+  const [priceSelectionData, setPriceSelectionData] = useState(null);
 
   const getProducts = async () => {
     const token = localStorage.getItem("token");
     const res = await axios.get("http://localhost:3000/api/product/all", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
     setProducts(res.data.products);
   };
@@ -113,38 +113,64 @@ function UrlTracker({ products, setProducts }) {
 
     try {
       const token = localStorage.getItem("token");
-      console.log(token);
       const res = await axios.post(
         "http://localhost:3000/api/product/track",
-        { url: urlInput }, // body
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }, // config
+        { url: urlInput },
+        { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
       );
 
-      const data = res.data;
-
-      if (!data.length < 1) {
-        setMsg("error:" + data.message);
-        throw new Error(data.message || "Failed to add tracker");
+      if (res.status === 202 && res.data.requirePriceSelection) {
+        setPriceSelectionData({
+          productData: res.data.productData,
+          priceOptions: res.data.priceOptions,
+          url: urlInput
+        });
+        setAdding(false);
+        setMsg("");
+        return;
       }
 
-      // Add to local state
+      if (res.data && res.data.message && res.data.message.includes("Failed")) {
+        throw new Error(res.data.message);
+      }
 
       setUrlInput("");
       setMsg("success:Tracker added! Price check will begin shortly.");
       getProducts();
     } catch (err) {
       if (err.status === 500) {
-        setMsg("error: Could not fetch product try again later", err);
+        setMsg("error: Could not fetch product try again later");
       } else if (err.status === 401) {
         setMsg("error: You are not authenticated");
-      } else {
+      } else if (err.response && err.response.data) {
         setMsg("error: " + err.response.data.message);
+      } else {
+        setMsg("error: Failed to track product.");
       }
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handlePriceSelect = async (selectedPrice) => {
+    const data = priceSelectionData;
+    setPriceSelectionData(null);
+    setAdding(true);
+    setMsg("Saving selected price...");
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        "http://localhost:3000/api/product/track",
+        { url: data.url, productData: data.productData, selectedPrice },
+        { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
+      );
+
+      setUrlInput("");
+      setMsg("success:Tracker added with selected price!");
+      getProducts();
+    } catch (err) {
+      setMsg("error:Failed to save selected price.");
     } finally {
       setAdding(false);
     }
@@ -157,7 +183,7 @@ function UrlTracker({ products, setProducts }) {
     <div
       className="p-5 rounded-2xl
                     bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl
-                    border border-white/60 dark:border-slate-700/50 shadow-sm"
+                    border border-white/60 dark:border-slate-700/50 shadow-sm relative"
     >
       <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
         ➕ Track a new product
@@ -212,12 +238,56 @@ function UrlTracker({ products, setProducts }) {
           {isError ? "⚠️" : "✅"} {msgText}
         </div>
       )}
+
+      {/* Multiple Prices Selection Modal */}
+      {priceSelectionData && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div 
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl relative overflow-hidden"
+            style={{ animation: 'modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
+          >
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 to-fuchsia-600"></div>
+            
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2 mt-2">Multiple Prices Detected</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
+              We found a few different prices for <span className="font-semibold text-slate-700 dark:text-slate-300">"{priceSelectionData.productData.name.substring(0, 40)}..."</span>. Please select the correct one you'd like to track:
+            </p>
+
+            <div className="flex flex-col gap-3 mb-6 max-h-[40vh] overflow-y-auto pr-2">
+              {priceSelectionData.priceOptions.map((price, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handlePriceSelect(price)}
+                  className="flex justify-between items-center w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:border-violet-300 dark:hover:border-violet-700 transition-all text-left group"
+                >
+                  <span className="font-semibold text-slate-700 dark:text-slate-200 group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors">
+                    ₹{price.toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-xs font-bold text-violet-600 dark:text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity bg-violet-100 dark:bg-violet-900/40 px-2 py-1 rounded-md">
+                    Select
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => setPriceSelectionData(null)}
+              className="w-full py-3 px-4 rounded-xl font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-[0.98]"
+            >
+              Cancel Tracking
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
 
 /* ── Mini product table (shows top 5 on home) ── */
 function MiniTable({ products, onRemove, searchTerm, onProductClick }) {
+  const [itemToDelete, setItemToDelete] = useState(null);
+
   const filtered = products.filter((p) => {
     const term = (searchTerm || "").toLowerCase();
     if (!term) return true;
@@ -266,6 +336,7 @@ function MiniTable({ products, onRemove, searchTerm, onProductClick }) {
                   "Change",
                   "Status",
                   "Last Check",
+                  "Actions"
                 ].map((h) => (
                   <th
                     key={h}
@@ -365,12 +436,78 @@ function MiniTable({ products, onRemove, searchTerm, onProductClick }) {
                           ? new Date(p.createdAt).toLocaleString()
                           : "—"}
                     </td>
+                    <td className="px-5 py-3 text-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setItemToDelete(p);
+                        }}
+                        className="group relative flex items-center justify-center p-2.5 mx-auto rounded-xl text-red-500 bg-red-50 dark:bg-red-500/10 hover:text-white hover:bg-gradient-to-r hover:from-red-500 hover:to-rose-600 shadow-sm hover:shadow-md hover:shadow-red-500/30 active:scale-95 transition-all duration-300"
+                        title="Delete Tracker"
+                      >
+                        <IcTrash />
+                        {/* Tooltip */}
+                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] font-semibold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-lg">
+                          Delete
+                        </span>
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Advanced Custom Delete Confirmation Modal */}
+      {itemToDelete && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-all duration-300">
+          <div 
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[24px] p-6 max-w-sm w-full shadow-2xl relative overflow-hidden"
+            style={{ animation: 'modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
+          >
+            <style>
+              {`
+                @keyframes modalPop {
+                  0% { transform: scale(0.9); opacity: 0; }
+                  100% { transform: scale(1); opacity: 1; }
+                }
+              `}
+            </style>
+            
+            {/* Top decorative gradient line */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-rose-600"></div>
+
+            <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center mx-auto mb-4 border border-red-100 dark:border-red-500/20 shadow-inner">
+              <IcTrash className="w-7 h-7 text-red-500" />
+            </div>
+            
+            <h3 className="text-xl font-extrabold text-center text-slate-800 dark:text-slate-100 mb-2">Delete Tracker?</h3>
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+              Are you sure you want to delete <span className="font-semibold text-slate-700 dark:text-slate-300">"{itemToDelete.name.length > 30 ? itemToDelete.name.substring(0, 30) + '...' : itemToDelete.name}"</span>? This action cannot be undone.
+            </p>
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setItemToDelete(null)}
+                className="flex-1 py-3 px-4 rounded-xl font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  onRemove(itemToDelete._id || itemToDelete.id);
+                  setItemToDelete(null);
+                }}
+                className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-gradient-to-r from-red-500 to-rose-600 shadow-md shadow-red-500/20 hover:shadow-red-500/40 hover:from-red-600 hover:to-rose-700 transition-all active:scale-95"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -385,8 +522,19 @@ export default function DashboardHome({ products, setProducts, searchTerm }) {
     [],
   );
 
-  const removeProduct = (id) =>
-    setProducts((p) => p.filter((x) => x.id !== id));
+  const removeProduct = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:3000/api/product/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProducts((p) => p.filter((x) => (x._id || x.id) !== id));
+      setDropped_price_products_state((p) => p.filter((x) => (x._id || x.id) !== id));
+      setRisen_price_products_state((p) => p.filter((x) => (x._id || x.id) !== id));
+    } catch (error) {
+      console.error("Failed to delete product", error);
+    }
+  };
   const active = products.filter((p) => p.status === "active").length;
   const dropped = products.filter((p) => p.trend === "down").length;
   const risen = products.filter((p) => p.trend === "up").length;

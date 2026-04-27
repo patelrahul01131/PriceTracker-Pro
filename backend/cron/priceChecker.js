@@ -26,7 +26,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function processOne(product) {
   const label = `[PriceCheck] "${product.name?.slice(0, 40)}"`;
   try {
-    const result = await checkPrice(product.url);
+    const result = await checkPrice(product.url, product.price);
 
     if (!result) {
       console.warn(`${label} — scraper returned null, skipping.`);

@@ -50,11 +50,11 @@ function buildSuggestion(product) {
 
   if (history.length < 2) {
     return {
-      verdict: "WATCH",
+      verdict: "MONITORING",
       color: "yellow",
       icon: "👀",
       reason:
-        "Not enough price history yet. We need at least 2 check-ins to make a suggestion.",
+        "We're gathering more data. At least 2 price checks are needed to analyze trends.",
     };
   }
 
@@ -72,21 +72,33 @@ function buildSuggestion(product) {
   const recentTrend =
     last3.length >= 2 ? last3[last3.length - 1] - last3[0] : 0;
 
+  // Case: Price hasn't changed at all
   if (maxPrice === minPrice) {
     return {
-      verdict: "PRICE NOT CHANGED",
+      verdict: "WAITING",
       color: "yellow",
       icon: "⚖️",
-      reason: `The price hasn't changed from ${fmt(currentPrice)} since tracking started. Keep waiting.`,
+      reason: `The price is rock-steady at ${fmt(currentPrice)}. No movement detected yet—keep it on your radar!`,
     };
   }
 
-  if (currentPrice <= minPrice) {
+  // Case: Price is currently at its lowest ever tracked
+  if (currentPrice <= minPrice && currentPrice < maxPrice) {
     return {
       verdict: "BUY NOW",
       color: "emerald",
       icon: "🔥",
-      reason: `This is the ALL-TIME LOW price tracked (${fmt(minPrice)}). ${pctDropFromRegister > 0 ? `That's a ${pctDropFromRegister.toFixed(1)}% drop from the original tracked price!` : ""}`,
+      reason: `Amazing deal! This is the lowest price we've ever seen for this item (${fmt(minPrice)}).`,
+    };
+  }
+
+  // Case: Price is exactly at register price and hasn't dropped
+  if (currentPrice === registerPrice && recentTrend >= 0) {
+    return {
+      verdict: "HOLD",
+      color: "yellow",
+      icon: "⏳",
+      reason: `Price is currently at the original tracked price of ${fmt(registerPrice)}. Wait for a dip!`,
     };
   }
 
@@ -95,7 +107,7 @@ function buildSuggestion(product) {
       verdict: "BUY",
       color: "green",
       icon: "✅",
-      reason: `Price (${fmt(currentPrice)}) is below the average price of ${fmt(Math.round(avgPrice))} and has been trending down. Good time to buy.`,
+      reason: `Price is ${fmt(currentPrice)}, which is below the average of ${fmt(Math.round(avgPrice))} and trending down.`,
     };
   }
 
@@ -113,7 +125,7 @@ function buildSuggestion(product) {
       verdict: "WAIT",
       color: "yellow",
       icon: "⏳",
-      reason: `Price is falling but still above the average of ${fmt(Math.round(avgPrice))}. Wait for it to drop a bit more.`,
+      reason: `Price is falling but still above the average of ${fmt(Math.round(avgPrice))}. Almost there!`,
     };
   }
 
@@ -122,7 +134,7 @@ function buildSuggestion(product) {
       verdict: "DON'T BUY",
       color: "red",
       icon: "🚫",
-      reason: `Price is near its tracked high (${fmt(maxPrice)}) and trending upward. Hold off for a better deal.`,
+      reason: `Price is peaking near ${fmt(maxPrice)} or rising. Not the best time—wait for a correction.`,
     };
   }
 
@@ -130,7 +142,7 @@ function buildSuggestion(product) {
     verdict: "WATCH",
     color: "yellow",
     icon: "👀",
-    reason: `Price is relatively stable around ${fmt(Math.round(avgPrice))}. Keep monitoring.`,
+    reason: `Price is oscillating around ${fmt(Math.round(avgPrice))}. Stay alert for any sudden drops!`,
   };
 }
 

@@ -3,6 +3,11 @@ const flipkart = require("../components/flipkart");
 const ajio = require("../components/ajio");
 const meesho = require("../components/meesho");
 const zepto = require("../components/zepto");
+const tatacliq = require("../components/tatacliq");
+const jiomart = require("../components/jiomart");
+const snapdeal = require("../components/snapdeal");
+const mi = require("../components/mi");
+const bigbasket = require("../components/bigbasket");
 const scrap = require("../components/scrap");
 const checkPrice = require("../components/checkPrice");
 
@@ -12,26 +17,56 @@ const trackProduct = async (req, res) => {
     try {
         let product = null; 
 
-        if(url.includes("flipkart")){
-            product = await flipkart(url);
+        // If user already selected a price from popup
+        if (req.body.productData && req.body.selectedPrice) {
+            product = req.body.productData;
+            product.price = req.body.selectedPrice;
+        } else {
+            if(url.includes("flipkart")){
+                product = await flipkart(url);
+            }
+            else if(url.includes("ajio")){
+                product = await ajio(url);
+            }
+            else if(url.includes("meesho")){
+                product = await meesho(url);
+            }
+            else if (url.includes('zepto.com' )) {
+                product = await zepto(url);
+            }
+            else if(url.includes("tatacliq.com")){
+                product = await tatacliq(url);
+            }
+            else if (url.includes('jiomart.com')) {
+                product = await jiomart(url);
+            }
+            else if (url.includes('snapdeal.com')) {
+                product = await snapdeal(url);
+            }
+            else if (url.includes('mi.com')) {
+                product = await mi(url);
+            }
+            else if (url.includes('bigbasket.com')) {
+                product = await bigbasket(url);
+            }
+            else{
+                product = await scrap(url);
+            }
         }
-        else if(url.includes("ajio")){
-            product = await ajio(url);
-        }
-        else if(url.includes("meesho")){
-            product = await meesho(url);
-        }
-        else if (url.includes('zepto.com')) {
-            product = await zepto(url);
-        }
-        else{
-            product = await scrap(url);
-        }
-
 
         if (!product) {
             console.log("failed to scrape product");
             return res.status(500).json({ message: "Failed to scrape product" });
+        }
+
+        // If multiple prices detected and no price selected yet
+        if (product.multiplePrices && product.multiplePrices.length > 1 && !req.body.selectedPrice) {
+            return res.status(202).json({
+                message: "Multiple prices detected. Please select the accurate price.",
+                requirePriceSelection: true,
+                productData: product,
+                priceOptions: product.multiplePrices
+            });
         }
 
         if (!product || isNaN(product.price) || product.price === null) {
@@ -42,7 +77,7 @@ const trackProduct = async (req, res) => {
             });
         }
 
-        console.log(product);
+        // console.log(product);
 
         const newProduct = new Product({
             name: product.name,
@@ -131,7 +166,8 @@ const manualCheckPrice = async (req, res) => {
             return res.status(404).json({ message: "Product not found" });
         }
 
-        const result = await checkPrice(product.url);
+        // Pass the current price so the scraper can pick the closest one if multiple prices are detected
+        const result = await checkPrice(product.url, product.price);
 
         if (!result || result.price == null) {
             return res.status(502).json({ message: "Could not fetch the latest price. The store may be temporarily unavailable." });
@@ -158,4 +194,17 @@ const manualCheckPrice = async (req, res) => {
     }
 };
 
-module.exports = { trackProduct, getAllProducts, getProductById, toggleProductCheck, manualCheckPrice };
+const deleteProduct = async (req, res) => {
+    try {
+        const product = await Product.findOneAndDelete({ _id: req.params.id, user: req.user.id });
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+        return res.status(200).json({ message: "Product deleted successfully" });
+    } catch (error) {
+        console.log("failed to delete product");
+        return res.status(500).json({ message: "Failed to delete product", error: error.message });
+    }
+};
+
+module.exports = { trackProduct, getAllProducts, getProductById, toggleProductCheck, manualCheckPrice, deleteProduct };

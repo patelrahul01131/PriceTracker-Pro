@@ -88,11 +88,11 @@ export default function Sidebar({ page, setPage }) {
 
   return (
     <aside
-      className="w-[240px] shrink-0 flex flex-col gap-1 p-4
+      className="w-[240px] shrink-0 flex flex-col p-4
                       bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl
                       border-r border-slate-200/80 dark:border-slate-700/50
                       shadow-[4px_0_24px_rgba(0,0,0,0.04)]
-                      h-screen sticky top-0 overflow-y-auto"
+                      h-screen sticky top-0"
     >
       {/* Brand */}
       <div className="flex items-center gap-2 px-2 pb-4 mb-2 border-b border-slate-200 dark:border-slate-700/60">
@@ -110,41 +110,44 @@ export default function Sidebar({ page, setPage }) {
         </span>
       </div>
 
-      {/* Nav items */}
-      {NAV_ITEMS.map(({ id, label, Icon }) => (
+      {/* Nav items - scrollable area */}
+      <div className="flex-1 overflow-y-auto flex flex-col gap-1 py-2">
+        {NAV_ITEMS.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            id={`nav-${id}`}
+            onClick={() => setPage(id)}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+                        cursor-pointer transition-all duration-200 text-left
+              ${
+                page === id
+                  ? "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-semibold"
+                  : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-violet-600 dark:hover:text-violet-400"
+              }`}
+          >
+            <Icon /> {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Logout - fixed at bottom */}
+      <div className="pt-4 border-t border-slate-200 dark:border-slate-700/60 mt-auto">
         <button
-          key={id}
-          id={`nav-${id}`}
-          onClick={() => setPage(id)}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-                      cursor-pointer transition-all duration-200 text-left
-            ${
-              page === id
-                ? "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-semibold"
-                : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-violet-600 dark:hover:text-violet-400"
-            }`}
+          id="sidebar-logout-btn"
+          onClick={() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("userName");
+            localStorage.removeItem("userEmail");
+            navigate("/login");
+          }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+                     cursor-pointer transition-all duration-200
+                     text-slate-400 dark:text-slate-500
+                     hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500"
         >
-          <Icon /> {label}
+          <IcLogout /> Logout
         </button>
-      ))}
-
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Logout */}
-      <button
-        id="sidebar-logout-btn"
-        onClick={() => {
-          localStorage.removeItem("token");
-          navigate("/login");
-        }}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-                   cursor-pointer transition-all duration-200
-                   text-slate-400 dark:text-slate-500
-                   hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500"
-      >
-        <IcLogout /> Logout
-      </button>
+      </div>
     </aside>
   );
 }

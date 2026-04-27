@@ -30,37 +30,44 @@ export default function MyTrackers({ products, setProducts, searchTerm }) {
     setTimeout(() => setMsg(""), 4000);
   };
 
-  const removeProduct = (id) => setProducts((p) => p.filter((x) => x.id !== id));
+  const removeProduct = (id) => setProducts((p) => p.filter((x) => x._id !== (id || x.id)));
 
   const filtered = products.filter((p) => {
     const term = (searchTerm || "").toLowerCase();
     if (!term) return true;
-    return p.name?.toLowerCase().includes(term) || p.platform?.toLowerCase().includes(term);
+    return (
+      p.name?.toLowerCase().includes(term) || 
+      p.platform?.toLowerCase().includes(term) ||
+      p.brand?.toLowerCase().includes(term)
+    );
   });
 
   const isError = msg.startsWith("error:");
   const msgText = msg.replace(/^(success|error):/, "");
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* URL input card */}
-      <div className="p-5 rounded-2xl
-                      bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl
+      <div className="p-6 rounded-3xl
+                      bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl
                       border border-white/60 dark:border-slate-700/50 shadow-sm">
-        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">➕ Add a new tracker</p>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">
-          Paste any product URL from Amazon, Flipkart, Myntra, Croma, and more.
+        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1 flex items-center gap-2">
+          <span className="text-xl">➕</span> Add a new tracker
         </p>
-        <div className="flex gap-2">
+        <p className="text-xs text-slate-400 dark:text-slate-500 mb-4 ml-7">
+          Paste a product URL from Amazon, Flipkart, Myntra, JioMart, BigBasket or Mi.com.
+        </p>
+        <div className="flex gap-3">
           <input
             id="trackers-url-input"
             type="url"
-            placeholder="https://www.amazon.in/dp/..."
-            className="flex-1 px-4 py-2.5 rounded-xl text-sm outline-none transition-all
-                       bg-slate-100 dark:bg-slate-800/70
-                       border border-slate-200 dark:border-slate-700
+            placeholder="Paste product link here..."
+            className="flex-1 px-4 py-3 rounded-2xl text-sm outline-none transition-all
+                       bg-slate-50 dark:bg-slate-800/40
+                       border border-slate-200 dark:border-slate-700/60
                        text-slate-900 dark:text-slate-100
                        placeholder-slate-400 dark:placeholder-slate-500
+                       focus:bg-white dark:focus:bg-slate-800/80
                        focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
             value={urlInput}
             onChange={(e) => { setUrlInput(e.target.value); setMsg(""); }}
@@ -70,20 +77,20 @@ export default function MyTrackers({ products, setProducts, searchTerm }) {
             id="trackers-add-btn"
             onClick={addTracker}
             disabled={adding}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold
                        text-white cursor-pointer whitespace-nowrap
                        bg-gradient-to-r from-violet-600 to-violet-400
-                       shadow-md shadow-violet-500/25 hover:shadow-violet-500/40
+                       shadow-xl shadow-violet-500/25 hover:shadow-violet-500/40
                        hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200
                        disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {adding
-              ? <span className="anim-spin w-4 h-4 rounded-full border-2 border-white/30 border-t-white inline-block" />
+              ? <span className="anim-spin w-5 h-5 rounded-full border-2 border-white/30 border-t-white inline-block" />
               : <><IcAdd /> Track Price</>}
           </button>
         </div>
         {msg && (
-          <div className={`flex items-center gap-2 mt-3 px-3 py-2 rounded-xl text-sm font-medium
+          <div className={`flex items-center gap-2 mt-4 px-4 py-3 rounded-2xl text-sm font-semibold animate-fade-in
             ${isError
               ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-red-600 dark:text-red-400"
               : "bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400"}`}>
@@ -93,111 +100,137 @@ export default function MyTrackers({ products, setProducts, searchTerm }) {
       </div>
 
       {/* Full tracker table */}
-      <div className="rounded-2xl overflow-hidden
-                      bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl
+      <div className="rounded-3xl overflow-hidden
+                      bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl
                       border border-white/60 dark:border-slate-700/50 shadow-sm">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800/60">
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-            🗂️ All Tracked Products
-          </span>
-          <span className="text-xs px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 font-semibold">
-            {filtered.length} total
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800/60">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span className="text-lg">🗂️</span> All Tracked Products
+          </h3>
+          <span className="text-[10px] uppercase tracking-wider px-3 py-1 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-extrabold">
+            {filtered.length} trackers
           </span>
         </div>
 
         {filtered.length === 0 ? (
-          <div className="py-16 text-center">
-            <div className="text-5xl mb-3">📭</div>
-            <p className="text-slate-400 dark:text-slate-500 text-sm">
-              {searchTerm ? "No results for your search." : "No trackers yet. Add a URL above!"}
+          <div className="py-20 text-center">
+            <div className="text-6xl mb-4">📭</div>
+            <p className="text-slate-400 dark:text-slate-500 text-sm font-medium">
+              {searchTerm ? "No results found for your search." : "No trackers yet. Add your first product URL above!"}
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-slate-50/80 dark:bg-slate-800/40">
+                <tr className="bg-slate-50/50 dark:bg-slate-800/30">
                   {TABLE_HEADERS.map((h) => (
-                    <th key={h} className="px-5 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    <th key={h} className="px-6 py-4 text-left text-[11px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {filtered.map((p) => {
-                  const d   = p.cur - p.old;
-                  const pct = p.old ? ((d / p.old) * 100).toFixed(1) : 0;
+                  const currentPrice = Number(p.price);
+                  const regPrice = Number(p.register_price);
+                  const diff = currentPrice - regPrice;
+                  const pct = regPrice ? ((diff / regPrice) * 100).toFixed(1) : 0;
+                  const isDown = diff < 0;
+                  const isZero = diff === 0;
+
                   return (
-                    <tr key={p.id} className="border-t border-slate-100 dark:border-slate-800/40 hover:bg-violet-50/30 dark:hover:bg-violet-900/10 transition-colors">
+                    <tr key={p._id || p.id} className="hover:bg-violet-50/20 dark:hover:bg-violet-900/10 transition-colors group">
                       {/* Product */}
-                      <td className="px-5 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-lg shrink-0">
-                            {p.emoji}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center p-1.5 shadow-sm group-hover:scale-110 transition-transform">
+                            {p.image ? (
+                              <img src={p.image} alt="" className="w-full h-full object-contain" />
+                            ) : (
+                              <span className="text-xl">📦</span>
+                            )}
                           </div>
                           <div>
-                            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100 max-w-[180px] truncate">
+                            <div className="text-sm font-bold text-slate-800 dark:text-slate-100 max-w-[220px] truncate leading-tight mb-1">
                               {p.name}
                             </div>
-                            <div className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-                              <IcLink />{p.site}
+                            <div className="flex items-center gap-2">
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">
+                                {p.platform || "Store"}
+                              </span>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                                {p.brand || "-"}
+                              </span>
                             </div>
                           </div>
                         </div>
                       </td>
 
-                      {/* Price */}
-                      <td className="px-5 py-3 text-sm font-bold text-slate-800 dark:text-slate-100">
-                        {p.cur > 0 ? inr(p.cur) : <span className="text-slate-400 text-xs animate-pulse">Fetching…</span>}
+                      {/* Current Price */}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className={`text-base font-black ${isDown ? "text-emerald-600 dark:text-emerald-400" : diff > 0 ? "text-red-500" : "text-slate-800 dark:text-slate-100"}`}>
+                            {currentPrice > 0 ? inr(currentPrice) : <span className="text-slate-300 text-xs animate-pulse">Wait…</span>}
+                          </span>
+                          <span className="text-[10px] text-slate-400 line-through decoration-slate-300">
+                            {inr(regPrice)}
+                          </span>
+                        </div>
                       </td>
 
                       {/* Change */}
-                      <td className="px-5 py-3 text-sm font-semibold">
-                        {p.old > 0 ? (
-                          <span className={d < 0 ? "text-emerald-600" : d > 0 ? "text-red-500" : "text-slate-400"}>
-                            {d < 0 ? "▼" : d > 0 ? "▲" : "—"}{" "}
-                            {d !== 0 ? inr(Math.abs(d)) : "No change"}
-                            {d !== 0 && <span className="ml-1 opacity-60 text-xs">({pct}%)</span>}
+                      <td className="px-6 py-4">
+                        <div className={`flex flex-col text-xs font-black ${isDown || isZero ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>
+                          <span className="flex items-center gap-1">
+                            {isZero ? "—" : isDown ? "▼" : "▲"}{" "}
+                            {diff !== 0 ? inr(Math.abs(diff)) : "Price Unchanged"}
                           </span>
-                        ) : <span className="text-slate-400">—</span>}
+                          {diff !== 0 && (
+                            <span className="text-[10px] opacity-70">
+                              ({isDown || isZero ? "" : "+"}{pct}%)
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Status */}
-                      <td className="px-5 py-3">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight
                           ${p.status === "active"
-                            ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                            : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${p.status === "active" ? "bg-emerald-500" : "bg-amber-500"}`} />
-                          {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${p.status === "active" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                          {p.status}
                         </span>
                       </td>
 
                       {/* Last check */}
-                      <td className="px-5 py-3 text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">
-                        {p.last}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                          <span>{p.last_check_date ? new Date(p.last_check_date).toLocaleDateString() : "Never"}</span>
+                          <span className="opacity-60">{p.last_check_date ? new Date(p.last_check_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}</span>
+                        </div>
                       </td>
 
                       {/* Actions */}
-                      <td className="px-5 py-3">
+                      <td className="px-6 py-4">
                         <div className="flex gap-2">
                           <button
-                            id={`refresh-${p.id}`}
-                            title="Refresh price"
-                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700
+                            id={`refresh-${p._id}`}
+                            className="p-2 rounded-xl border border-slate-100 dark:border-slate-700
                                        text-slate-400 hover:text-violet-500 hover:border-violet-300
-                                       dark:hover:border-violet-600 transition-all cursor-pointer"
+                                       dark:hover:border-violet-600 transition-all cursor-pointer bg-white dark:bg-slate-800/40 shadow-sm"
                           >
                             <IcRefresh />
                           </button>
                           <button
-                            id={`remove-${p.id}`}
-                            onClick={() => removeProduct(p.id)}
-                            title="Remove tracker"
-                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700
+                            id={`remove-${p._id}`}
+                            onClick={(e) => { e.stopPropagation(); removeProduct(p._id); }}
+                            className="p-2 rounded-xl border border-slate-100 dark:border-slate-700
                                        text-slate-400 hover:text-red-500 hover:border-red-300
-                                       dark:hover:border-red-700 transition-all cursor-pointer"
+                                       dark:hover:border-red-700 transition-all cursor-pointer bg-white dark:bg-slate-800/40 shadow-sm"
                           >
                             <IcTrash />
                           </button>

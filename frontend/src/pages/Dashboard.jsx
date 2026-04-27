@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import DashboardTopbar from "../components/DashboardTopbar";
@@ -8,24 +9,35 @@ import Alerts from "./dashboard/Alerts";
 import Settings from "./dashboard/Settings";
 
 export default function Dashboard() {
-  /* ── Shared state ── */
+  const navigate = useNavigate();
   const [page, setPage] = useState("dashboard");
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
 
   const getProducts = async () => {
     const token = localStorage.getItem("token");
-    const res = await axios.get("http://localhost:3000/api/product/all", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    setProducts(res.data.products);
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    try {
+      const res = await axios.get("http://localhost:3000/api/product/all", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setProducts(res.data.products);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
+    }
   };
 
   useEffect(() => {
     getProducts();
-  }, []);
+  }, [navigate]);
 
   /* ── Active page renderer ── */
   const renderPage = () => {
