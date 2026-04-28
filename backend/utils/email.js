@@ -3,15 +3,15 @@ const nodemailer = require("nodemailer");
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER || "your-email@gmail.com",
-    pass: process.env.EMAIL_PASS || "your-app-password",
+    user: process.env.EMAILUSERNAME,
+    pass: process.env.EMAILPASS,
   },
 });
 
 const sendPriceDropEmail = async (email, product, oldPrice, newPrice) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_USER || "your-email@gmail.com",
+      from: process.env.EMAILUSERNAME,
       to: email,
       subject: `Price Drop Alert: ${product.name}`,
       html: `
@@ -38,7 +38,7 @@ const sendWeeklyReportEmail = async (email, products) => {
     `).join("");
 
     const mailOptions = {
-      from: process.env.EMAIL_USER || "your-email@gmail.com",
+      from: process.env.EMAILUSERNAME,
       to: email,
       subject: "Your Weekly Price Tracking Report",
       html: `

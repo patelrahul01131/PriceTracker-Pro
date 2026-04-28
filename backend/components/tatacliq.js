@@ -143,6 +143,10 @@ async function scrapeTataCliq(url) {
             if (m) image = m[1].startsWith('http') ? m[1] : `https://img.tatacliq.com${m[1]}`;
         }
 
+        if(!rating){
+            rating = $('meta[property="og:rating"]').attr('content');
+        }
+
         if (price) {
             console.log(`✅ [${PLATFORM}] Scraped via HTML`);
             return { name, price, currency: 'INR', image, brand, inStock: true ,platform:PLATFORM,rating:parseFloat(rating).toFixed(1),status:inStock ? "active" : "out_of_stock",createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),failedSnapshot:null};
